@@ -1,80 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>OTC Forex Platform</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OTC Simulator</title>
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+    }
+    .button-group button {
+      padding: 8px 16px;
+      margin-right: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .active {
+      background-color: #007bff;
+      color: white;
+    }
+    .inactive {
+      background-color: #e0e0e0;
+      color: #333;
+    }
+    #chart {
+      width: 800px;
+      height: 400px;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 font-sans">
-  <div class="flex min-h-screen">
-    <!-- Sidebar -->
-    <aside class="w-64 bg-white p-6 shadow-lg">
-      <h2 class="text-xl font-bold mb-6">OTC Broker</h2>
-      <nav class="space-y-4">
-        <a href="#" class="block text-gray-700 hover:text-blue-600">Dashboard</a>
-        <a href="#" class="block text-gray-700 hover:text-blue-600">Wallet</a>
-        <a href="#" class="block text-gray-700 hover:text-blue-600">Forex Pairs</a>
-        <a href="#" class="block text-gray-700 hover:text-blue-600">Settings</a>
-      </nav>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="flex-1 p-8">
-      <!-- Header -->
-      <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">OTC Forex Trading</h1>
-        <button class="bg-blue-600 text-white px-4 py-2 rounded">Deposit</button>
-      </div>
-
-      <!-- Chart Area -->
-      <section class="bg-white p-6 rounded-lg shadow mb-6">
-        <h2 class="text-lg font-semibold mb-4">Live Chart - USD/INR</h2>
-        <div class="h-64 bg-gray-200 flex items-center justify-center rounded">
-          <span class="text-gray-500">[ Chart Placeholder ]</span>
-        </div>
-      </section>
-
-      <!-- Trading Form + Recent Trades -->
-      <div class="grid grid-cols-2 gap-6">
-        <!-- Order Form -->
-        <section class="bg-white p-6 rounded-lg shadow">
-          <h2 class="text-lg font-semibold mb-4">Place OTC Order</h2>
-          <form class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium">Pair</label>
-              <select class="w-full p-2 border rounded">
-                <option>USD/INR</option>
-                <option>USD/EUR</option>
-                <option>GBP/INR</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium">Amount (USD)</label>
-              <input type="number" class="w-full p-2 border rounded" placeholder="Enter amount">
-            </div>
-            <div>
-              <label class="block text-sm font-medium">Rate (INR)</label>
-              <input type="number" class="w-full p-2 border rounded" placeholder="83.41">
-            </div>
-            <div class="flex space-x-2">
-              <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Buy</button>
-              <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded">Sell</button>
-            </div>
-          </form>
-        </section>
-
-        <!-- Recent Trades -->
-        <section class="bg-white p-6 rounded-lg shadow">
-          <h2 class="text-lg font-semibold mb-4">Recent Trades</h2>
-          <ul class="text-sm space-y-2">
-            <li class="flex justify-between"><span>12:10</span> <span>BUY</span> <span>$500</span> <span>83.41</span></li>
-            <li class="flex justify-between"><span>12:08</span> <span>SELL</span> <span>$300</span> <span>83.40</span></li>
-            <li class="flex justify-between"><span>12:05</span> <span>BUY</span> <span>$1000</span> <span>83.42</span></li>
-          </ul>
-        </section>
-      </div>
-    </main>
+<body>
+  <h1>OTC Simulated Chart - <span id="timeframe-label">M1</span></h1>
+  <div class="button-group">
+    <button id="btn-m1" class="active">M1</button>
+    <button id="btn-m2" class="inactive">M2</button>
   </div>
+  <div id="chart"></div>
+
+  <script>
+    const chartElement = document.getElementById("chart");
+    const chart = LightweightCharts.createChart(chartElement, {
+      layout: { backgroundColor: '#ffffff', textColor: '#333' },
+      width: 800,
+      height: 400,
+      timeScale: { timeVisible: true },
+      grid: {
+        vertLines: { color: '#eee' },
+        horzLines: { color: '#eee' },
+      },
+    });
+
+    const candleSeries = chart.addCandlestickSeries();
+    let candles = [];
+    let currentTime = Math.floor(Date.now() / 1000);
+    let currentPrice = 83.4;
+    let interval;
+    let currentTimeframe = 'M1';
+
+    function generateCandle() {
+      const open = currentPrice;
+      const volatility = currentTimeframe === "M1" ? 0.05 : 0.1;
+      const high = open + Math.random() * volatility;
+      const low = open - Math.random() * volatility;
+      const close = low + Math.random() * (high - low);
+
+      const candle = {
+        time: currentTime,
+        open: parseFloat(open.toFixed(4)),
+        high: parseFloat(high.toFixed(4)),
+        low: parseFloat(low.toFixed(4)),
+        close: parseFloat(close.toFixed(4)),
+      };
+
+      candles.push(candle);
+      if (candles.length > 60) candles.shift();
+      candleSeries.setData(candles);
+
+      currentPrice = close;
+      currentTime += currentTimeframe === "M1" ? 60 : 120;
+    }
+
+    function startSimulation() {
+      clearInterval(interval);
+      candles = [];
+      candleSeries.setData(candles);
+      currentTime = Math.floor(Date.now() / 1000);
+      generateCandle();
+      interval = setInterval(generateCandle, currentTimeframe === "M1" ? 3000 : 5000);
+    }
+
+    document.getElementById("btn-m1").addEventListener("click", () => {
+      currentTimeframe = "M1";
+      document.getElementById("timeframe-label").textContent = "M1";
+      document.getElementById("btn-m1").className = "active";
+      document.getElementById("btn-m2").className = "inactive";
+      startSimulation();
+    });
+
+    document.getElementById("btn-m2").addEventListener("click", () => {
+      currentTimeframe = "M2";
+      document.getElementById("timeframe-label").textContent = "M2";
+      document.getElementById("btn-m2").className = "active";
+      document.getElementById("btn-m1").className = "inactive";
+      startSimulation();
+    });
+
+    startSimulation();
+  </script>
 </body>
 </html>
